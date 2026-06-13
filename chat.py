@@ -1,9 +1,13 @@
 import os
 from google import genai
 
-# We set the API key here so the SDK can find it.
-# In a real app, we usually hide this key in a separate file, but for learning, this is okay!
-api_key = "AQ.Ab8RN6LTbqwose4rUEKuJ5JlA7G2sOKihmODkEA_rvV92-Po8A"
+# Load API key from environment variable for security
+# Set it with: export GEMINI_API_KEY="your-key-here"
+api_key = os.environ.get("GEMINI_API_KEY", "")
+if not api_key:
+    print("Error: GEMINI_API_KEY not set. Run: export GEMINI_API_KEY='your-key-here'")
+    exit(1)
+
 os.environ["GEMINI_API_KEY"] = api_key
 
 print("Connecting to Gemini...")

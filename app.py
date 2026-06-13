@@ -1,17 +1,52 @@
 import os
 import json
 import uuid
+
+# Fix sqlite3 for Streamlit Cloud (Python 3.10 ships an older sqlite)
+try:
+    import pysqlite3 as sqlite3
+    import sys
+    sys.modules["sqlite3"] = sqlite3
+except ImportError:
+    pass
+
 import streamlit as st
 import chromadb
 from google import genai
 
 # ─── SETUP ───────────────────────────────────────────────────────────────────
-api_key = "AQ.Ab8RN6LTbqwose4rUEKuJ5JlA7G2sOKihmODkEA_rvV92-Po8A"
+# Use st.secrets for Streamlit Community Cloud deployment
+# Locally, put your key in .streamlit/secrets.toml
+api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY", ""))
+if not api_key:
+    st.error("⚠️ GEMINI_API_KEY not found. Add it in .streamlit/secrets.toml or Streamlit Cloud Secrets.")
+    st.stop()
 os.environ["GEMINI_API_KEY"] = api_key
 gemini = genai.Client()
 
-db = chromadb.PersistentClient(path="./chroma_data")
-collection = db.get_collection(name="notebook")
+# Use /tmp for persistent storage on Streamlit Cloud (ephemeral filesystem)
+CHROMA_PATH = os.environ.get("CHROMA_PATH", "./chroma_data")
+db = chromadb.PersistentClient(path=CHROMA_PATH)
+
+# Auto-create collection and embed notes if collection doesn't exist yet
+try:
+    collection = db.get_collection(name="notebook")
+except Exception:
+    collection = db.get_or_create_collection(name="notebook")
+    # Auto-embed my_notes.txt on first run
+    notes_file = "my_notes.txt"
+    if os.path.exists(notes_file):
+        with open(notes_file, "r") as f:
+            text_content = f.read()
+        chunks = text_content.split("\n\n")
+        embeddings = []
+        for chunk in chunks:
+            resp = gemini.models.embed_content(
+                model="gemini-embedding-2", contents=chunk
+            )
+            embeddings.append(resp.embeddings[0].values)
+        ids = [f"paragraph_{i}" for i in range(len(chunks))]
+        collection.add(documents=chunks, embeddings=embeddings, ids=ids)
 
 HISTORY_FILE = "chat_history.json"
 

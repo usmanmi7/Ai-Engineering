@@ -2,8 +2,12 @@ import os
 import chromadb
 from google import genai
 
-# Set up Gemini
-api_key = "AQ.Ab8RN6LTbqwose4rUEKuJ5JlA7G2sOKihmODkEA_rvV92-Po8A"
+# Load API key from environment variable for security
+api_key = os.environ.get("GEMINI_API_KEY", "")
+if not api_key:
+    print("Error: GEMINI_API_KEY not set. Run: export GEMINI_API_KEY='your-key-here'")
+    exit(1)
+
 os.environ["GEMINI_API_KEY"] = api_key
 client = genai.Client()
 
