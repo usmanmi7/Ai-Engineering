@@ -1,0 +1,7 @@
+# My Personal Notes
+
+My name is Usman. I am learning how to become an AI Engineer.
+My favorite color is blue, and I enjoy building projects to learn new skills.
+
+I am currently building a project called Mini NotebookLM. It uses the Gemini API, Python, and a vector database called ChromaDB. 
+The goal of this project is to learn about RAG (Retrieval-Augmented Generation).
